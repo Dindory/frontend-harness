@@ -1,0 +1,26 @@
+{
+  "hooks": {
+    "SessionStart": [
+      { "hooks": [{ "type": "command", "command": "bun \"$CLAUDE_PROJECT_DIR/.my-harness/hooks/team-drift.ts\"" }] }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Read|Edit|Write|MultiEdit|NotebookEdit|Grep|Bash",
+        "hooks": [{ "type": "command", "command": "bun \"$CLAUDE_PROJECT_DIR/.my-harness/hooks/protect-secrets.ts\"" }]
+      },
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [{ "type": "command", "command": "bun \"$CLAUDE_PROJECT_DIR/.my-harness/hooks/protect-shared.ts\"" }]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [{ "type": "command", "command": "bun \"$CLAUDE_PROJECT_DIR/.my-harness/hooks/format.ts\"" }]
+      }
+    ],
+    "Stop": [
+      { "hooks": [{ "type": "command", "command": "bun \"$CLAUDE_PROJECT_DIR/.my-harness/hooks/session-summary.ts\"" }] }
+    ]
+  }
+}
