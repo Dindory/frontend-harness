@@ -12,6 +12,9 @@ export interface HookInput {
   cwd?: string;
   hook_event_name?: 'SessionStart' | 'UserPromptSubmit' | 'PreToolUse' | 'PostToolUse' | 'Stop';
   prompt?: string;
+  stop_hook_active?: boolean;
+  /** 도구 실행 결과 (형태는 도구마다 달라 문자열로 직렬화해서 본다) */
+  tool_response?: unknown;
   tool_name?: string;
   tool_input?: ToolInput;
 }
@@ -33,6 +36,9 @@ export interface UserPromptSubmitOutput {
 }
 
 export interface HookOutput {
+  /** Stop 훅에서 'block' 이면 Claude 가 reason 을 받고 턴을 이어간다 */
+  decision?: 'block';
+  reason?: string;
   /** 사용자에게 보여줄 메시지 */
   systemMessage?: string;
   hookSpecificOutput?: PreToolUseOutput | SessionStartOutput | UserPromptSubmitOutput;

@@ -85,6 +85,8 @@ bash .my-harness/scripts/new-task.sh <slug>   # .my-harness/tasks/YYYY-MM-DD-<sl
 
 ## 훅 (자동 실행)
 
+- 턴 시작: 입력을 `context-map.json` 과 대조해 관련 문서·활성 요청서를 알려 준다 (`route-context`)
+- 턴 종료: 코드가 바뀐 턴은 `run-tests.sh` 실행 영수증(PASS, 코드 변경 없음)과 요청서 갱신이 없으면 막는다. 영수증은 하네스가 도구 실행을 보고 기록한다 (`record-receipt`). 통과하면 증거를 지운다 (`turn-gate`)
 - 세션 시작: 팀 문서가 하네스 기준 시점 이후 바뀌었으면 알림 → 🟡 항목을 다시 확인할 것
 - `.env*`·키 파일 접근 차단 / `packages/`·`docs/`·`.agents/` 수정 시 확인 요청
 - 파일 수정 후 프로젝트 포매터 실행 (설정돼 있을 때만)

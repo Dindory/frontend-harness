@@ -118,6 +118,18 @@ echo ""
 echo "━━━ Summary"
 printf '%b\n' "$SUMMARY"
 echo ""
+
+# 턴 종료 게이트(turn-gate)가 읽는 증거. 통과 후 게이트가 지운다.
+EVIDENCE_DIR="$ROOT/.my-harness/evidence"
+mkdir -p "$EVIDENCE_DIR"
+{
+  echo "# 검증 증거"
+  echo "- 시각: $(date '+%Y-%m-%d %H:%M:%S')"
+  echo "- 대상:${DIRS}"
+  echo "- 결과: $([ "$FAILED" -ne 0 ] && echo FAIL || echo PASS)"
+  printf '%b\n' "$SUMMARY"
+} > "$EVIDENCE_DIR/latest.md"
+
 if [ "$FAILED" -ne 0 ]; then
   echo "❌ Verification failed"
   exit 1

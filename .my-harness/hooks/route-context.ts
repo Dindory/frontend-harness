@@ -2,7 +2,7 @@
 // 문서를 읽는 건 Claude 다. 여기서는 경로와 이유만 넘겨 매 턴 토큰을 아낀다.
 import fs from 'node:fs';
 import path from 'node:path';
-import { readInput, projectDir, output } from './lib.ts';
+import { readInput, projectDir, output, codeFingerprint, stateFile, activeTaskFile, harnessDir } from './lib.ts';
 
 interface Rule {
   id: string;
@@ -22,11 +22,16 @@ const prompt = (input.prompt ?? '').toLowerCase();
 if (!prompt.trim()) process.exit(0);
 
 const root = projectDir(input);
-const harness = path.join(import.meta.dirname, '..');
+
+// 턴 시작 스냅샷: 끝날 때 turn-gate 가 이 턴에 코드가 바뀌었는지 비교한다
+try {
+  fs.mkdirSync(path.dirname(stateFile(input.session_id)), { recursive: true });
+  fs.writeFileSync(stateFile(input.session_id), JSON.stringify({ startedAt: Date.now(), codeHash: codeFingerprint(root) }));
+} catch {}
 
 let map: ContextMap;
 try {
-  map = JSON.parse(fs.readFileSync(path.join(harness, 'context-map.json'), 'utf8'));
+  map = JSON.parse(fs.readFileSync(path.join(harnessDir, 'context-map.json'), 'utf8'));
 } catch {
   process.exit(0);
 }
@@ -42,19 +47,9 @@ for (const rule of map.rules) {
   }
 }
 
-// 2) 활성 요청서: 가장 최근 것 중 '보고' 항목이 아직 체크되지 않은 것
-const tasksDir = path.join(harness, 'tasks');
-let activeTask: string | null = null;
-if (fs.existsSync(tasksDir)) {
-  const files = fs.readdirSync(tasksDir).filter((f) => f.endsWith('.md')).sort().reverse();
-  for (const f of files) {
-    const body = fs.readFileSync(path.join(tasksDir, f), 'utf8');
-    if (!/^- \[x\] 보고/m.test(body)) {
-      activeTask = `.my-harness/tasks/${f}`;
-      break;
-    }
-  }
-}
+// 2) 활성 요청서
+const taskAbs = activeTaskFile();
+const activeTask = taskAbs ? `.my-harness/tasks/${path.basename(taskAbs)}` : null;
 
 const lines: string[] = [];
 if (activeTask) lines.push(`활성 요청서: ${activeTask} — 이 작업의 정본이다. 진행 기록·결정 로그를 여기에 갱신한다.`);
