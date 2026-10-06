@@ -1,6 +1,26 @@
 {
+  "permissions": {
+    "deny": [
+      "Bash(git reset --hard:*)",
+      "Bash(git push --force:*)",
+      "Bash(git push -f:*)",
+      "Bash(git clean -f:*)",
+      "Bash(rm -rf /)",
+      "Bash(rm -rf ~)",
+      "Bash(rm -rf ~/)",
+      "Bash(rm -rf .)"
+    ],
+    "ask": [
+      "Bash(git push --force-with-lease:*)",
+      "Bash(git checkout -- .)",
+      "Bash(git restore .)",
+      "Bash(git stash drop:*)",
+      "Bash(git branch -D:*)"
+    ]
+  },
   "hooks": {
     "SessionStart": [
+      { "hooks": [{ "type": "command", "command": "bun \"$CLAUDE_PROJECT_DIR/.my-harness/hooks/profile-check.ts\"" }] },
       { "hooks": [{ "type": "command", "command": "bun \"$CLAUDE_PROJECT_DIR/.my-harness/hooks/team-drift.ts\"" }] }
     ],
     "UserPromptSubmit": [
@@ -10,6 +30,10 @@
       {
         "matcher": "Read|Edit|Write|MultiEdit|NotebookEdit|Grep|Bash",
         "hooks": [{ "type": "command", "command": "bun \"$CLAUDE_PROJECT_DIR/.my-harness/hooks/protect-secrets.ts\"" }]
+      },
+      {
+        "matcher": "Edit|Write|MultiEdit|NotebookEdit|Bash",
+        "hooks": [{ "type": "command", "command": "bun \"$CLAUDE_PROJECT_DIR/.my-harness/hooks/protect-harness.ts\"" }]
       },
       {
         "matcher": "Edit|Write|MultiEdit",

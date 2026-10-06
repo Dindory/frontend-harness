@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import type { HookInput, HookOutput } from './types.ts';
+import type { HookInput, HookOutput, Profile } from './types.ts';
 
 export function readInput(): HookInput {
   try {
@@ -53,8 +53,18 @@ export function output(obj: HookOutput): never {
   process.exit(0);
 }
 
-/** 하네스 폴더(.my-harness) 절대 경로 */
 export const harnessDir = path.join(import.meta.dirname, '..');
+
+/** install.sh 가 고른 profiles/<name> 을 여기로 복사한다 */
+export const profileDir = path.join(harnessDir, 'profile');
+
+export function loadProfile(): Profile | null {
+  try {
+    return JSON.parse(fs.readFileSync(path.join(profileDir, 'profile.json'), 'utf8')) as Profile;
+  } catch {
+    return null;
+  }
+}
 
 export function stateFile(sessionId: string | undefined): string {
   return path.join(harnessDir, '.state', `${sessionId || 'unknown'}.json`);
@@ -69,6 +79,16 @@ export function activeTaskFile(): string | null {
     if (!/^- \[x\] 보고/m.test(fs.readFileSync(path.join(dir, f), 'utf8'))) return path.join(dir, f);
   }
   return null;
+}
+
+export function tasksModifiedSince(ms: number): string[] {
+  const dir = path.join(harnessDir, 'tasks');
+  if (!fs.existsSync(dir)) return [];
+  return fs
+    .readdirSync(dir)
+    .filter((f) => f.endsWith('.md'))
+    .map((f) => path.join(dir, f))
+    .filter((f) => fs.statSync(f).mtimeMs >= ms);
 }
 
 /** 현재 코드 상태의 지문: 하네스 파일을 뺀 변경 내용 전체(추적·미추적)의 해시. 내용이 바뀌면 달라진다. */
@@ -90,9 +110,13 @@ export function codeFingerprint(root: string): string {
 
 export interface Receipt {
   at: number;
-  command: string;
   result: 'PASS' | 'FAIL';
   codeHash: string;
+  /** run-tests.sh --only 값. 비어 있으면 전체 실행 */
+  only: string;
+  /** "<dir>:<step>" */
+  ran: string[];
+  skipped: string[];
 }
 
 export function receiptFile(sessionId: string | undefined): string {

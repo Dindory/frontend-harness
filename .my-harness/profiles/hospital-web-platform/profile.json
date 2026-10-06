@@ -1,0 +1,18 @@
+{
+  "name": "hospital-web-platform",
+  "description": "병원별 홈페이지를 한 저장소에서 관리하는 모노레포 (apps/<site>, packages/*, 팀 문서 docs/)",
+  "match": { "remote": "Medivance-dev/hospital-web-platform" },
+  "expects": ["docs/PROJECT-MAP.md", "docs/PLATFORM-PLAN.md"],
+  "teamBaseline": "72b26c0",
+  "teamDocs": ["docs", ".agents", "README.md", "AGENTS.md", "CLAUDE.md"],
+  "protected": [
+    { "pattern": "^packages/", "reason": "공통 패키지입니다. 영향받는 앱을 확인했나요? (팀 규칙: 공통 기능 변경은 영향 범위 확인)" },
+    { "pattern": "^docs/", "reason": "팀 정본 문서입니다. 계획·설계를 바꾸면 PROJECT-MAP 과 검증 근거도 함께 갱신해야 합니다." },
+    { "pattern": "^\\.agents/", "reason": "팀 공용 스킬입니다. 동작 규칙은 스킬이 아니라 docs/workflows 에서 고치는 게 팀 방식입니다." },
+    { "pattern": "^README\\.md$", "reason": "팀 README 입니다." }
+  ],
+  "verify": { "required": ["typecheck"] },
+  "permissions": {
+    "ask": ["Bash(vercel:*)", "Bash(bunx vercel:*)", "Bash(npx vercel:*)"]
+  }
+}

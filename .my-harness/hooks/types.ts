@@ -35,11 +35,29 @@ export interface UserPromptSubmitOutput {
   additionalContext: string;
 }
 
+export interface PostToolUseOutput {
+  hookEventName: 'PostToolUse';
+  additionalContext: string;
+}
+
 export interface HookOutput {
   /** Stop 훅에서 'block' 이면 Claude 가 reason 을 받고 턴을 이어간다 */
   decision?: 'block';
   reason?: string;
-  /** 사용자에게 보여줄 메시지 */
   systemMessage?: string;
-  hookSpecificOutput?: PreToolUseOutput | SessionStartOutput | UserPromptSubmitOutput;
+  hookSpecificOutput?: PreToolUseOutput | SessionStartOutput | UserPromptSubmitOutput | PostToolUseOutput;
+}
+
+/** .my-harness/profile/profile.json */
+export interface Profile {
+  name: string;
+  description?: string;
+  match?: { remote?: string };
+  /** 이 레포가 맞다면 있어야 하는 경로 */
+  expects?: string[];
+  teamBaseline?: string;
+  teamDocs?: string[];
+  protected?: { pattern: string; reason: string }[];
+  verify?: { required?: string[] };
+  permissions?: { allow?: string[]; ask?: string[]; deny?: string[] };
 }

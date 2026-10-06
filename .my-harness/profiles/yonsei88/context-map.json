@@ -1,0 +1,29 @@
+{
+  "screenWork": ["figma", "피그마", "히어로", "섹션", "페이지", "화면", "구현", "퍼블", "section", "hero", "page"],
+  "rules": [
+    {
+      "id": "scale",
+      "keywords": ["scale", "usescale", "스케일", "고정폭", "데스크톱 시안", "1920", "모바일", "반응형", "fluid"],
+      "docs": [
+        { "path": "hooks/useScale.tsx", "why": "고정폭(1920) 시안 스케일 훅" },
+        { "path": "components/home/doctor.tsx", "why": "useScale 사용 예" }
+      ]
+    },
+    {
+      "id": "style",
+      "keywords": ["cn(", "클래스", "tailwind", "스타일", "twmerge", "clsx"],
+      "docs": [
+        { "path": "util/style.ts", "why": "cn() = twMerge(clsx())" },
+        { "path": "app/globals.css", "why": "Tailwind 4 전역 스타일·테마" }
+      ]
+    },
+    {
+      "id": "layout",
+      "keywords": ["헤더", "네비", "nav", "메뉴", "푸터", "footer", "검색", "플로팅", "레이아웃"],
+      "docs": [
+        { "path": "app/layout.tsx", "why": "공통 레이아웃" },
+        { "path": "components/layout/navbar.tsx", "why": "네비게이션 (navMenuItem·navDropdown·searchBar 조합)" }
+      ]
+    }
+  ]
+}

@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # frontend-harness installer
 #
-# 로컬 실행:   bash /path/to/frontend-harness/install.sh [TARGET_DIR]
+# 로컬 실행:   bash /path/to/frontend-harness/install.sh [TARGET_DIR] [--profile NAME]
 # 원격 실행:   curl -fsSL https://raw.githubusercontent.com/Dindory/frontend-harness/main/install.sh | bash
-#              curl -fsSL .../install.sh | bash -s -- /path/to/target
+#              curl -fsSL .../install.sh | bash -s -- /path/to/target --profile NAME
 #
 # 환경 변수:
 #   HARNESS_REPO  (기본: Dindory/frontend-harness)
@@ -14,7 +14,19 @@ HARNESS_REPO="${HARNESS_REPO:-Dindory/frontend-harness}"
 HARNESS_REF="${HARNESS_REF:-main}"
 HARNESS_NAME=".my-harness"
 
-TARGET_DIR="$(cd "${1:-.}" && pwd)"
+TARGET_ARG="."
+PROFILE=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --profile) PROFILE="${2:-}"; shift ;;
+    --profile=*) PROFILE="${1#--profile=}" ;;
+    -*) echo "unknown option: $1" >&2; exit 2 ;;
+    *) TARGET_ARG="$1" ;;
+  esac
+  shift
+done
+
+TARGET_DIR="$(cd "$TARGET_ARG" && pwd)"
 HARNESS_DIR="$TARGET_DIR/$HARNESS_NAME"
 
 info() { printf '%s\n' "$*"; }
@@ -49,7 +61,24 @@ if [ "$SOURCE_DIR" = "$HARNESS_DIR" ]; then
   exit 1
 fi
 
-info "🚀 Installing harness into $TARGET_DIR"
+# 1-1. 프로필 선택: --profile > origin URL 이 match.remote 를 포함 > 이전에 설치한 프로필
+PROFILES_DIR="$SOURCE_DIR/profiles"
+jget() { grep -o "\"$2\": *\"[^\"]*\"" "$1" 2>/dev/null | head -1 | sed 's/.*"\([^"]*\)"$/\1/' || true; }
+
+ORIGIN="$(git -C "$TARGET_DIR" remote get-url origin 2>/dev/null || true)"
+if [ -z "$PROFILE" ] && [ -n "$ORIGIN" ]; then
+  for f in "$PROFILES_DIR"/*/profile.json; do
+    remote="$(jget "$f" remote)"
+    if [ -n "$remote" ] && [[ "$ORIGIN" == *"$remote"* ]]; then PROFILE="$(basename "$(dirname "$f")")"; break; fi
+  done
+fi
+[ -n "$PROFILE" ] || PROFILE="$(jget "$HARNESS_DIR/profile/profile.json" name)"
+if [ ! -f "$PROFILES_DIR/${PROFILE:-_}/profile.json" ]; then
+  warn "프로필을 정하지 못했습니다. --profile 로 지정하세요: $(ls "$PROFILES_DIR" | tr '\n' ' ')"
+  exit 1
+fi
+
+info "🚀 Installing harness into $TARGET_DIR (profile: $PROFILE)"
 
 # ---------------------------------------------------------------------------
 # 2. 하네스 본체 복사 (재실행 시 최신 버전으로 교체)
@@ -63,7 +92,8 @@ fi
 rm -rf "$HARNESS_DIR"
 mkdir -p "$HARNESS_DIR"
 cp -R "$SOURCE_DIR/." "$HARNESS_DIR/"
-rm -rf "$HARNESS_DIR/tasks"
+rm -rf "$HARNESS_DIR/tasks" "$HARNESS_DIR/profiles"
+cp -R "$PROFILES_DIR/$PROFILE" "$HARNESS_DIR/profile"
 if [ -n "$PRESERVE_DIR" ]; then
   cp -R "$PRESERVE_DIR/tasks" "$HARNESS_DIR/"
   rm -rf "$PRESERVE_DIR"
@@ -136,21 +166,22 @@ for agent in "$HARNESS_DIR"/agents/*.md; do
   info "✅ My subagent  → .claude/agents/$name"
 done
 
-# 4-4. 개인 지침: CLAUDE.local.md 에서 AGENTS.md import (Claude Code 가 세션 시작 시 자동 로드)
-IMPORT_LINE="@$HARNESS_NAME/AGENTS.md"
+# 4-4. 개인 지침: CLAUDE.local.md 에서 공통 지침 + 프로필 지도 import
 CLAUDE_LOCAL="$TARGET_DIR/CLAUDE.local.md"
-if ! grep -qxF "$IMPORT_LINE" "$CLAUDE_LOCAL" 2>/dev/null; then
-  printf '%s\n' "$IMPORT_LINE" >> "$CLAUDE_LOCAL"
-fi
+for IMPORT_LINE in "@$HARNESS_NAME/AGENTS.md" "@$HARNESS_NAME/profile/AGENTS.md"; do
+  grep -qxF "$IMPORT_LINE" "$CLAUDE_LOCAL" 2>/dev/null || printf '%s\n' "$IMPORT_LINE" >> "$CLAUDE_LOCAL"
+done
 exclude "/CLAUDE.local.md"
-info "✅ My rules     → CLAUDE.local.md (@$HARNESS_NAME/AGENTS.md)"
+info "✅ My rules     → CLAUDE.local.md (@$HARNESS_NAME/AGENTS.md, @$HARNESS_NAME/profile/AGENTS.md)"
 
-# 4-5. 훅: .claude/settings.local.json 에 병합 (기존 개인 설정은 유지, 이전 하네스 훅만 교체)
+# 4-5. 훅·권한 규칙: .claude/settings.local.json 에 병합 (기존 개인 설정은 유지)
 SETTINGS_LOCAL=".claude/settings.local.json"
 if is_tracked "$SETTINGS_LOCAL"; then
   warn "$SETTINGS_LOCAL 은 팀 저장소 파일이라 훅을 등록하지 않았습니다."
 else
-  bun "$HARNESS_DIR/scripts/merge-settings.ts" "$TARGET_DIR/$SETTINGS_LOCAL" "$HARNESS_DIR/settings.hooks.json"
+  mkdir -p "$TARGET_DIR/.claude"
+  bun "$HARNESS_DIR/scripts/merge-settings.ts" "$TARGET_DIR/$SETTINGS_LOCAL" \
+    "$HARNESS_DIR/settings.harness.json" "$HARNESS_DIR/profile/profile.json"
   exclude "/$SETTINGS_LOCAL"
   info "✅ My hooks     → $SETTINGS_LOCAL"
 fi

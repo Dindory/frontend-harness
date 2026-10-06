@@ -2,7 +2,7 @@
 // 문서를 읽는 건 Claude 다. 여기서는 경로와 이유만 넘겨 매 턴 토큰을 아낀다.
 import fs from 'node:fs';
 import path from 'node:path';
-import { readInput, projectDir, output, codeFingerprint, stateFile, activeTaskFile, harnessDir } from './lib.ts';
+import { readInput, projectDir, output, codeFingerprint, stateFile, activeTaskFile, profileDir } from './lib.ts';
 
 interface Rule {
   id: string;
@@ -29,12 +29,10 @@ try {
   fs.writeFileSync(stateFile(input.session_id), JSON.stringify({ startedAt: Date.now(), codeHash: codeFingerprint(root) }));
 } catch {}
 
-let map: ContextMap;
+let map: ContextMap = { screenWork: [], rules: [] };
 try {
-  map = JSON.parse(fs.readFileSync(path.join(harnessDir, 'context-map.json'), 'utf8'));
-} catch {
-  process.exit(0);
-}
+  map = JSON.parse(fs.readFileSync(path.join(profileDir, 'context-map.json'), 'utf8'));
+} catch {}
 
 const hit = (words: string[]) => words.some((w) => prompt.includes(w.toLowerCase()));
 

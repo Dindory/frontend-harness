@@ -55,11 +55,14 @@ lockfile() { [ -f "$1" ] || [ -f "$ROOT/$1" ]; }
 
 SUMMARY=""
 FAILED=0
+RAN=""
+SKIPPED=""
 
 run_step() { # name, command...
   local name="$1"; shift
   echo ""
   echo "━━━ ▶ [$DIR] $name: $*"
+  RAN="$RAN,$DIR:$name"
   if "$@"; then
     SUMMARY="$SUMMARY\n  ✅ [$DIR] $name"
   else
@@ -67,7 +70,7 @@ run_step() { # name, command...
     FAILED=1
   fi
 }
-skip_step() { SUMMARY="$SUMMARY\n  ⏭️  [$DIR] $1 (skipped: $2)"; }
+skip_step() { SKIPPED="$SKIPPED,$DIR:$1"; SUMMARY="$SUMMARY\n  ⏭️  [$DIR] $1 (skipped: $2)"; }
 want() { [ -z "$ONLY" ] || [ "$ONLY" = "$1" ]; }
 
 for DIR in $DIRS; do
@@ -129,6 +132,10 @@ mkdir -p "$EVIDENCE_DIR"
   echo "- 결과: $([ "$FAILED" -ne 0 ] && echo FAIL || echo PASS)"
   printf '%b\n' "$SUMMARY"
 } > "$EVIDENCE_DIR/latest.md"
+
+# 하네스(record-receipt)가 읽는 판정 줄. 사람이 아니라 훅이 읽는다.
+DIRS_CSV="$(echo $DIRS | tr ' ' ',')"
+echo "HARNESS_RESULT result=$([ "$FAILED" -ne 0 ] && echo FAIL || echo PASS) only=${ONLY} dirs=${DIRS_CSV} ran=${RAN#,} skipped=${SKIPPED#,}"
 
 if [ "$FAILED" -ne 0 ]; then
   echo "❌ Verification failed"
