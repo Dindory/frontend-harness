@@ -10,7 +10,8 @@ export interface ToolInput {
 export interface HookInput {
   session_id?: string;
   cwd?: string;
-  hook_event_name?: 'SessionStart' | 'PreToolUse' | 'PostToolUse' | 'Stop';
+  hook_event_name?: 'SessionStart' | 'UserPromptSubmit' | 'PreToolUse' | 'PostToolUse' | 'Stop';
+  prompt?: string;
   tool_name?: string;
   tool_input?: ToolInput;
 }
@@ -26,8 +27,13 @@ export interface SessionStartOutput {
   additionalContext: string;
 }
 
+export interface UserPromptSubmitOutput {
+  hookEventName: 'UserPromptSubmit';
+  additionalContext: string;
+}
+
 export interface HookOutput {
   /** 사용자에게 보여줄 메시지 */
   systemMessage?: string;
-  hookSpecificOutput?: PreToolUseOutput | SessionStartOutput;
+  hookSpecificOutput?: PreToolUseOutput | SessionStartOutput | UserPromptSubmitOutput;
 }

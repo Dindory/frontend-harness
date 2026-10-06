@@ -1,0 +1,42 @@
+{
+  "screenWork": ["figma", "피그마", "히어로", "섹션", "페이지", "화면", "구현", "퍼블", "section", "hero", "page"],
+  "rules": [
+    {
+      "id": "figma",
+      "keywords": ["figma", "피그마", "node-id", "시안", "디자인", "히어로", "섹션", "hero", "section"],
+      "docs": [
+        { "path": "docs/workflows/figma-fidelity.md", "why": "Figma 구현 절차" },
+        { "path": ".agents/skills/platform-figma-fidelity/SKILL.md", "why": "팀 Figma 충실도 스킬" }
+      ]
+    },
+    {
+      "id": "scale",
+      "keywords": ["scale", "useScale", "스케일", "고정폭", "데스크톱 시안", "모바일", "반응형", "fluid"],
+      "docs": [
+        { "path": "docs/workflows/scale-to-fit.md", "why": "scale-to-fit 규칙" },
+        { "path": "packages/layout-hooks/README.md", "why": "useScale 사용법" }
+      ]
+    },
+    {
+      "id": "new-site",
+      "keywords": ["새 병원", "신규 병원", "사이트 시작", "정의서", "site-brief", "새 사이트"],
+      "docs": [
+        { "path": "docs/templates/site-brief.md", "why": "병원 정의서 양식 (먼저 채워져 있어야 함)" },
+        { "path": "docs/PROJECT-MAP.md", "why": "현재 상태·다음 작업" }
+      ]
+    },
+    {
+      "id": "plan",
+      "keywords": ["계획", "결정", "확정", "미정", "로드맵", "plan", "다음 작업", "현재 상태"],
+      "docs": [
+        { "path": "docs/PLATFORM-PLAN.md", "why": "전체 계획·확정/미정 결정" },
+        { "path": "docs/PROJECT-MAP.md", "why": "현재 상태·다음 작업" }
+      ]
+    },
+    {
+      "id": "stack",
+      "keywords": ["스택", "프레임워크", "tailwind", "next", "기존 사이트", "inventory"],
+      "docs": [{ "path": "docs/REPOSITORY-INVENTORY.md", "why": "기존 사이트 기술 스택 근거" }]
+    }
+  ]
+}

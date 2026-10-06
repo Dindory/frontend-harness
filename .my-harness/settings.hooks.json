@@ -3,6 +3,9 @@
     "SessionStart": [
       { "hooks": [{ "type": "command", "command": "bun \"$CLAUDE_PROJECT_DIR/.my-harness/hooks/team-drift.ts\"" }] }
     ],
+    "UserPromptSubmit": [
+      { "hooks": [{ "type": "command", "command": "bun \"$CLAUDE_PROJECT_DIR/.my-harness/hooks/route-context.ts\"" }] }
+    ],
     "PreToolUse": [
       {
         "matcher": "Read|Edit|Write|MultiEdit|NotebookEdit|Grep|Bash",
