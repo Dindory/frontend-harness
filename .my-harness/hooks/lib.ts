@@ -2,7 +2,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
-import type { HookInput, HookOutput } from './types.ts';
+import { createHash } from 'node:crypto';
+import type { HookInput, HookOutput, Profile } from './types.ts';
 
 export function readInput(): HookInput {
   try {
@@ -50,4 +51,74 @@ export function block(message: string): never {
 export function output(obj: HookOutput): never {
   process.stdout.write(JSON.stringify(obj));
   process.exit(0);
+}
+
+export const harnessDir = path.join(import.meta.dirname, '..');
+
+/** install.sh 가 고른 profiles/<name> 을 여기로 복사한다 */
+export const profileDir = path.join(harnessDir, 'profile');
+
+export function loadProfile(): Profile | null {
+  try {
+    return JSON.parse(fs.readFileSync(path.join(profileDir, 'profile.json'), 'utf8')) as Profile;
+  } catch {
+    return null;
+  }
+}
+
+export function stateFile(sessionId: string | undefined): string {
+  return path.join(harnessDir, '.state', `${sessionId || 'unknown'}.json`);
+}
+
+/** 가장 최근 요청서 중 '보고' 항목이 아직 체크되지 않은 것 (절대 경로) */
+export function activeTaskFile(): string | null {
+  const dir = path.join(harnessDir, 'tasks');
+  if (!fs.existsSync(dir)) return null;
+  const files = fs.readdirSync(dir).filter((f) => f.endsWith('.md')).sort().reverse();
+  for (const f of files) {
+    if (!/^- \[x\] 보고/m.test(fs.readFileSync(path.join(dir, f), 'utf8'))) return path.join(dir, f);
+  }
+  return null;
+}
+
+export function tasksModifiedSince(ms: number): string[] {
+  const dir = path.join(harnessDir, 'tasks');
+  if (!fs.existsSync(dir)) return [];
+  return fs
+    .readdirSync(dir)
+    .filter((f) => f.endsWith('.md'))
+    .map((f) => path.join(dir, f))
+    .filter((f) => fs.statSync(f).mtimeMs >= ms);
+}
+
+/** 현재 코드 상태의 지문: 하네스 파일을 뺀 변경 내용 전체(추적·미추적)의 해시. 내용이 바뀌면 달라진다. */
+export function codeFingerprint(root: string): string {
+  const h = createHash('sha256');
+  h.update(git(root, ['diff', 'HEAD', '--', '.', ':(exclude).my-harness']) ?? '');
+  const untracked = (git(root, ['ls-files', '--others', '--exclude-standard', '--', '.', ':(exclude).my-harness']) ?? '')
+    .split('\n')
+    .filter(Boolean)
+    .sort();
+  for (const f of untracked) {
+    h.update(`\0${f}\0`);
+    try {
+      h.update(fs.readFileSync(path.join(root, f)));
+    } catch {}
+  }
+  return h.digest('hex').slice(0, 16);
+}
+
+export interface Receipt {
+  at: number;
+  result: 'PASS' | 'FAIL';
+  codeHash: string;
+  /** run-tests.sh --only 값. 비어 있으면 전체 실행 */
+  only: string;
+  /** "<dir>:<step>" */
+  ran: string[];
+  skipped: string[];
+}
+
+export function receiptFile(sessionId: string | undefined): string {
+  return path.join(harnessDir, '.state', `${sessionId || 'unknown'}.receipt.json`);
 }

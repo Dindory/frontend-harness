@@ -1,0 +1,17 @@
+{
+  "name": "yonsei88",
+  "description": "yonsei88 병원 홈페이지 — 루트 단일 Next.js 앱 (팀 문서·공통 패키지 없음)",
+  "match": { "remote": "Medivance-dev/yonsei88" },
+  "expects": ["app/layout.tsx", "util/style.ts", "hooks/useScale.tsx"],
+  "teamBaseline": "",
+  "teamDocs": [],
+  "protected": [
+    { "pattern": "^(hooks|util)/", "reason": "여러 섹션이 같이 쓰는 공통 유틸입니다. 사용하는 곳을 확인했나요?" },
+    { "pattern": "^app/layout\\.tsx$", "reason": "전체 페이지 공통 레이아웃입니다." },
+    { "pattern": "^(package\\.json|next\\.config\\.ts|tsconfig\\.json|eslint\\.config\\.mjs|postcss\\.config\\.mjs)$", "reason": "프로젝트 설정 파일입니다." }
+  ],
+  "verify": { "required": ["typecheck", "lint"] },
+  "permissions": {
+    "ask": ["Bash(vercel:*)", "Bash(bunx vercel:*)", "Bash(npx vercel:*)"]
+  }
+}

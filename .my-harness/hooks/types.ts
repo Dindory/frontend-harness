@@ -10,7 +10,11 @@ export interface ToolInput {
 export interface HookInput {
   session_id?: string;
   cwd?: string;
-  hook_event_name?: 'SessionStart' | 'PreToolUse' | 'PostToolUse' | 'Stop';
+  hook_event_name?: 'SessionStart' | 'UserPromptSubmit' | 'PreToolUse' | 'PostToolUse' | 'Stop';
+  prompt?: string;
+  stop_hook_active?: boolean;
+  /** 도구 실행 결과 (형태는 도구마다 달라 문자열로 직렬화해서 본다) */
+  tool_response?: unknown;
   tool_name?: string;
   tool_input?: ToolInput;
 }
@@ -26,8 +30,34 @@ export interface SessionStartOutput {
   additionalContext: string;
 }
 
+export interface UserPromptSubmitOutput {
+  hookEventName: 'UserPromptSubmit';
+  additionalContext: string;
+}
+
+export interface PostToolUseOutput {
+  hookEventName: 'PostToolUse';
+  additionalContext: string;
+}
+
 export interface HookOutput {
-  /** 사용자에게 보여줄 메시지 */
+  /** Stop 훅에서 'block' 이면 Claude 가 reason 을 받고 턴을 이어간다 */
+  decision?: 'block';
+  reason?: string;
   systemMessage?: string;
-  hookSpecificOutput?: PreToolUseOutput | SessionStartOutput;
+  hookSpecificOutput?: PreToolUseOutput | SessionStartOutput | UserPromptSubmitOutput | PostToolUseOutput;
+}
+
+/** .my-harness/profile/profile.json */
+export interface Profile {
+  name: string;
+  description?: string;
+  match?: { remote?: string };
+  /** 이 레포가 맞다면 있어야 하는 경로 */
+  expects?: string[];
+  teamBaseline?: string;
+  teamDocs?: string[];
+  protected?: { pattern: string; reason: string }[];
+  verify?: { required?: string[] };
+  permissions?: { allow?: string[]; ask?: string[]; deny?: string[] };
 }
